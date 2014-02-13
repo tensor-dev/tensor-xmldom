@@ -236,6 +236,15 @@ function parseAsync(source,defaultNSMapCopy,entityMap,domBuilder,errorHandler,cb
 
    function whileLoop(){
       var i = source.indexOf('<',start);
+      if(i<0){
+         if(!source.substr(start).match(/^\s*$/)){
+            var doc = domBuilder.document;
+            var text = doc.createTextNode(source.substr(start));
+            doc.appendChild(text);
+            domBuilder.currentElement = text;
+         }
+         return;
+      }
       if(i>start){
          appendText(i);
       }
@@ -264,46 +273,45 @@ function parseAsync(source,defaultNSMapCopy,entityMap,domBuilder,errorHandler,cb
             break;
          case '!':// <!doctype,<![CDATA,<!--
             locator&&position(i);
-            end = parseDCC(source,i,domBuilder);
+            end = parseDCC(source,i,domBuilder,errorHandler);
             break;
          default:
-            if(i<0){
-               if(!source.substr(start).match(/^\s*$/)){
-                  errorHandler.error('source code out of document root');
-               }
-               return cb(null);
-            }else{
-               try{
-                  locator&&position(i);
-                  var el = new ElementAttributes();
-                  //elStartEnd
-                  var end = parseElementStartPart(source,i,el,entityReplacer,errorHandler);
-                  var len = el.length;
-                  //position fixed
-                  if(len && locator){
-                     var backup = copyLocator(locator,{});
-                     for(var i = 0;i<len;i++){
-                        var a = el[i];
-                        position(a.offset);
-                        a.offset = copyLocator(locator,{});
-                     }
-                     copyLocator(backup,locator);
+            try{
+               locator&&position(i);
+
+               var el = new ElementAttributes();
+
+               //elStartEnd
+               var end = parseElementStartPart(source,i,el,entityReplacer,errorHandler);
+               var len = el.length;
+               //position fixed
+               if(len && locator){
+                  var backup = copyLocator(locator,{});
+                  for(var i = 0;i<len;i++){
+                     var a = el[i];
+                     position(a.offset);
+                     a.offset = copyLocator(locator,{});
                   }
-                  el.closed = el.closed||fixSelfClosed(source,end,el.tagName,closeMap);
-                  appendElement(el,domBuilder,parseStack);
+                  copyLocator(backup,locator);
+               }
+               if(!el.closed && fixSelfClosed(source,end,el.tagName,closeMap)){
+                  el.closed = true;
+                  if(!entityMap.nbsp){
+                     errorHandler.warning('unclosed xml attribute');
+                  }
+               }
+               appendElement(el,domBuilder,parseStack);
 
 
-                  if(el.uri === 'http://www.w3.org/1999/xhtml' && !el.closed){
-                     end = parseHtmlSpecialContent(source,end,el.tagName,entityReplacer,domBuilder)
-                  }else{
-                     end++;
-                  }
-               }catch(e){
-                  errorHandler.error('element parse error: '+e);
-                  end = -1;
+               if(el.uri === 'http://www.w3.org/1999/xhtml' && !el.closed){
+                  end = parseHtmlSpecialContent(source,end,el.tagName,entityReplacer,domBuilder)
+               }else{
+                  end++;
                }
+            }catch(e){
+               errorHandler.error('element parse error: '+e);
+               end = -1;
             }
-
       }
       if(end<0){
          //TODO: 这里有可能sax回退，有位置错误风险

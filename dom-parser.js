@@ -34,7 +34,7 @@ DOMParser.prototype.parseFromStringAsync = function(source,mimeType,callback){
 	var domBuilder = options.domBuilder || new DOMHandler();//contentHandler and LexicalHandler
 	var errorHandler = options.errorHandler;
 	var locator = options.locator;
-	var defaultNSMap = {};
+   var defaultNSMap = options.xmlns||{};
 	var entityMap = {'lt':'<','gt':'>','amp':'&','quot':'"','apos':"'"}
 	if(locator){
 		domBuilder.setDocumentLocator(locator)
@@ -47,9 +47,13 @@ DOMParser.prototype.parseFromStringAsync = function(source,mimeType,callback){
 		entityMap.copy = '\xa9';
 		defaultNSMap['']= 'http://www.w3.org/1999/xhtml';
 	}
-	sax.parseAsync(source,defaultNSMap,entityMap,function(e){
-      callback(e, domBuilder.document);
-   });
+   if(source){
+      sax.parseAsync(source,defaultNSMap,entityMap,function(e){
+         callback(e, domBuilder.document);
+      });
+   }else{
+      callback(new Error("invalid document source"));
+   }
 }
 function buildErrorHandler(errorImpl,domBuilder,locator){
 	if(!errorImpl){
