@@ -958,9 +958,19 @@ function serializeToString(node,buf){
 		}
 		return;
 	case ATTRIBUTE_NODE:
+		// Specifically for Tensor company. No quotas on attribute value
+		if (node.value && node.name === 'config' && node.ownerElement.localName === 'component') {
+			return buf.push(' ',node.name,'=\'',node.value,'\'');
+		}
+
 		return buf.push(' ',node.name,'="',node.value.replace(/[<&"]/g,_xmlEncoder),'"');
 	case TEXT_NODE:
-      return buf.push(node.data.replace(/<|&(?!\w+;)/g,_xmlEncoder));
+		// Specifically for Tensor company. No quotas on text node value
+		if (/\{\{([\s\S]+?)\}\}/.test(node.data)) {
+			return buf.push(node.data);
+		}
+
+		return buf.push(node.data.replace(/<|&(?!\w+;)/g,_xmlEncoder));
 	case CDATA_SECTION_NODE:
 		return buf.push( '<![CDATA[',node.data,']]>');
 	case COMMENT_NODE:
