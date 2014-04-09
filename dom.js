@@ -417,14 +417,16 @@ copy(NodeType,Node.prototype);
  * @return boolean true: break visit;
  */
 function _visitNode(node,callback){
-	if(callback(node)){
-		return true;
-	}
-	if(node = node.firstChild){
-		do{
-			if(_visitNode(node,callback)){return true}
-        }while(node=node.nextSibling)
-    }
+   if (node) {
+      if(callback(node)){
+         return true;
+      }
+      if(node = node.firstChild){
+         do{
+            if(_visitNode(node,callback)){return true}
+           }while(node=node.nextSibling)
+       }
+   }
 }
 
 
@@ -592,7 +594,7 @@ Document.prototype = {
 	// Introduced in DOM Level 2:
 	getElementById :	function(id){
 		var rtv = null;
-		_visitNode(this.documentElement,function(node){
+		_visitNode(this.documentElement, function(node){
 			if(node.nodeType == 1){
 				if(node.getAttribute('id') == id){
 					rtv = node;
