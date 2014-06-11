@@ -958,12 +958,10 @@ function serializeToString(node,buf){
 		}
 		return;
 	case ATTRIBUTE_NODE:
-		// Specifically for Tensor company. No quotas on attribute value
-		if (node.value && node.name === 'config' && node.ownerElement.localName === 'component') {
-			return buf.push(' ',node.name,'=\'',node.value,'\'');
-		}
-
-		return buf.push(' ',node.name,'="',node.value.replace(/[<&"]/g,_xmlEncoder),'"');
+      // Specifically for Tensor company. No quotas on attribute value
+      return buf.push(' ',node.name,'="',node.value.replace(/(\{\{[\s\S]+?\}\})|[<&"]/g,function(toEncode, ignore){
+         return ignore ? toEncode : _xmlEncoder(toEncode);
+      }),'"');
 	case TEXT_NODE:
 		// Specifically for Tensor company. No quotas on text node value
 		if (/\{\{([\s\S]+?)\}\}/.test(node.data)) {
