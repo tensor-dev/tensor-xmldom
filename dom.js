@@ -1107,7 +1107,7 @@ try{
 				try {
 					doc = parser.parseFromString("<div>" + value + "</div>", 'text/html');
 				} catch(e) {
-					console.log("Error while parsing innerHTML " + e);
+					console.log("Error while parsing innerHTML " + value + " " + e);
 				}
 				if (doc) {
 					ownNode = this.ownerDocument.importNode(doc.documentElement, true);
